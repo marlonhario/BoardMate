@@ -4,7 +4,7 @@ import { PricingTable } from "@clerk/nextjs";
 export default function PricingPage() {
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* <Navbar /> */}
+      <Navbar />
       <div className="py-12 container mx-auto px-4">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
