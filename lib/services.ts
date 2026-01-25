@@ -21,6 +21,7 @@ export const boardService = {
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
+
     if (error) throw error;
 
     return data || [];
@@ -153,7 +154,7 @@ export const taskService = {
       .update({
         column_id: newColumnId,
         sort_order: newOrder,
-        // updated_at: new Now();
+        // updated_at: new Date();
       })
       .eq("id", taskId);
 
