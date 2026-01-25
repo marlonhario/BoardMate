@@ -143,7 +143,7 @@ export default function HomePage() {
               <span className="text-xl font-bold">BoardMate</span>
             </div>
             <div className="flex items-center space-x-6 text-sm text-gray-400">
-              <span>© 2024 BoardMate. All rights reserved.</span>
+              <span>© 2026 BoardMate. All rights reserved.</span>
               <span>Built with Next.js & Clerk</span>
             </div>
           </div>

@@ -153,6 +153,7 @@ export const taskService = {
       .update({
         column_id: newColumnId,
         sort_order: newOrder,
+        // updated_at: new Now();
       })
       .eq("id", taskId);
 
