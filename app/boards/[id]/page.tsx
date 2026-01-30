@@ -44,6 +44,8 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import BoardCopy from "@/components/sample/BoardCopy";
+import Board from "@/components/sample/Board";
 
 function DroppableColumn({
   column,
@@ -915,6 +917,8 @@ export default function BoardPage() {
           </form>
         </DialogContent>
       </Dialog>
+      {/* <BoardCopy /> */}
+      <Board />
     </>
   );
 }
