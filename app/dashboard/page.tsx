@@ -100,13 +100,6 @@ export default function DashboardPage() {
     await createBoard({ title: "New Board" });
   };
 
-  // if (loading) {
-  //   return (
-  //     <div>
-  //       <Loader2 /> <span>Loading your boards...</span>
-  //     </div>
-  //   );
-  // }
 
   if (error) {
     return (
@@ -271,9 +264,11 @@ export default function DashboardPage() {
               }
             />
           </div>
-
-          {/* Boards Grid/List */}
-          {boards.length === 0 ? (
+          {loading ? (
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-pink-500"></div>
+            </div>
+          ) : boards.length === 0 ? (
             <div>No boards yet</div>
           ) : viewMode === "grid" ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
@@ -310,7 +305,10 @@ export default function DashboardPage() {
                 </Link>
               ))}
 
-              <Card onClick={handleCreateBoard} className="border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors cursor-pointer group">
+              <Card
+                onClick={handleCreateBoard}
+                className="border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors cursor-pointer group"
+              >
                 <CardContent className="p-4 sm:p-6 flex flex-col items-center justify-center h-full min-h-[200px]">
                   <Plus className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 group-hover:text-blue-600 mb-2" />
                   <p className="text-sm sm:text-base text-gray-600 group-hover:text-blue-600 font-medium">
