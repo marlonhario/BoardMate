@@ -8,6 +8,7 @@ import {
   PointerSensor,
   TouchSensor,
   closestCorners,
+  rectIntersection,
   useDroppable,
   useSensor,
   useSensors,
@@ -77,27 +78,40 @@ function Column({
   column: Column;
   onAddCard: (columnId: string) => void;
 }) {
-  const { setNodeRef } = useDroppable({
+  const { setNodeRef, isOver } = useDroppable({
     id: column.id, // 👈 THIS is the fix
   });
 
   return (
     <div
       ref={setNodeRef}
-      className="w-72 shrink-0 snap-start bg-gray-100 rounded p-3"
+      className="w-72 shrink-0 snap-start bg-gray-100 rounded p-3 flex flex-col"
     >
       <h2 className="font-semibold mb-2">{column.title}</h2>
 
-      <SortableContext
-        items={column.cards.map((c) => c.id)}
-        strategy={verticalListSortingStrategy}
+      {/* 👇 FULL HEIGHT DROPPABLE ZONE */}
+      <div
+        ref={setNodeRef}
+        className={`
+          flex-1
+          space-y-2
+          min-h-[200px]
+          rounded
+          transition
+          ${isOver ? "bg-blue-100/40" : ""}
+        `}
       >
-        <div className="space-y-2 min-h-[60px] touch-none">
-          {column.cards.map((card) => (
-            <Card key={card.id} card={card} />
-          ))}
-        </div>
-      </SortableContext>
+        <SortableContext
+          items={column.cards.map((c) => c.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="space-y-2 min-h-[60px] touch-none">
+            {column.cards.map((card) => (
+              <Card key={card.id} card={card} />
+            ))}
+          </div>
+        </SortableContext>
+      </div>
 
       <button
         onClick={() => onAddCard(column.id)}
@@ -139,6 +153,37 @@ export default function Board() {
   const generateId = () => crypto.randomUUID();
 
   const handleDragOver = (event: DragOverEvent) => {
+    // const { active, over } = event;
+    // if (!over) return;
+
+    // const activeId = active.id as string;
+    // const overId = over.id as string;
+
+    // const activeColumn = findColumn(activeId);
+
+    // // 👇 over can be a COLUMN id OR a CARD id
+    // const overColumn =
+    //   columns.find((col) => col.id === overId) || findColumn(overId);
+
+    // if (!activeColumn || !overColumn) return;
+    // if (activeColumn.id === overColumn.id) return;
+
+    // setColumns((prev) => {
+    //   const next = structuredClone(prev);
+
+    //   const fromCol = next.find((c) => c.id === activeColumn.id)!;
+    //   const toCol = next.find((c) => c.id === overColumn.id)!;
+
+    //   const cardIndex = fromCol.cards.findIndex((c) => c.id === activeId);
+
+    //   const [movedCard] = fromCol.cards.splice(cardIndex, 1);
+
+    //   // 👇 works even if toCol.cards is empty
+    //   toCol.cards.push(movedCard);
+
+    //   return next;
+    // });
+
     const { active, over } = event;
     if (!over) return;
 
@@ -146,12 +191,12 @@ export default function Board() {
     const overId = over.id as string;
 
     const activeColumn = findColumn(activeId);
-
-    // 👇 over can be a COLUMN id OR a CARD id
     const overColumn =
       columns.find((col) => col.id === overId) || findColumn(overId);
 
     if (!activeColumn || !overColumn) return;
+
+    // 🚫 VERY IMPORTANT GUARD
     if (activeColumn.id === overColumn.id) return;
 
     setColumns((prev) => {
@@ -160,11 +205,14 @@ export default function Board() {
       const fromCol = next.find((c) => c.id === activeColumn.id)!;
       const toCol = next.find((c) => c.id === overColumn.id)!;
 
-      const cardIndex = fromCol.cards.findIndex((c) => c.id === activeId);
+      // 🛑 CARD ALREADY MOVED → DO NOTHING
+      if (toCol.cards.some((c) => c.id === activeId)) {
+        return prev;
+      }
 
+      const cardIndex = fromCol.cards.findIndex((c) => c.id === activeId);
       const [movedCard] = fromCol.cards.splice(cardIndex, 1);
 
-      // 👇 works even if toCol.cards is empty
       toCol.cards.push(movedCard);
 
       return next;
@@ -237,8 +285,10 @@ export default function Board() {
     // Mobile / touch (LONG PRESS)
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 250, // 👈 long press time (ms)
-        tolerance: 5, // 👈 finger can move a bit
+        // delay: 250, // 👈 long press time (ms)
+        // tolerance: 5, // 👈 finger can move a bit
+        delay: 300,
+        tolerance: 8,
       },
     }),
   );
@@ -246,7 +296,8 @@ export default function Board() {
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCorners}
+      collisionDetection={rectIntersection}
+      // collisionDetection={closestCorners}
       onDragStart={({ active }) => {
         const card = columns
           .flatMap((col) => col.cards)
