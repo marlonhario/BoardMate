@@ -53,18 +53,23 @@ function Card({ card }: { card: Card }) {
       ref={setNodeRef}
       style={style}
       {...attributes}
-      {...listeners}
-      className={`p-4 bg-white rounded shadow cursor-grab active:cursor-grabbing touch-manipulation
-        ${isDragging ? "opacity-30 scale-[0.98]" : ""}`}
+      className={`
+        p-4 bg-white rounded shadow
+        touch-manipulation
+        ${isDragging ? "opacity-30 scale-[0.98]" : ""}
+      `}
     >
-      <span {...listeners} className="cursor-grab touch-manipulation">
+      <span
+        {...listeners}
+        className="cursor-grab touch-manipulation inline-flex"
+      >
         <GripVertical size={18} />
       </span>
+
       <p>{card.title}</p>
     </div>
   );
 }
-
 function Column({
   column,
   onAddCard,
@@ -87,7 +92,7 @@ function Column({
         items={column.cards.map((c) => c.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="space-y-2 min-h-[60px]">
+        <div className="space-y-2 min-h-[60px] touch-none">
           {column.cards.map((card) => (
             <Card key={card.id} card={card} />
           ))}
@@ -279,7 +284,10 @@ export default function Board() {
       </div>
       <DragOverlay>
         {activeCard ? (
-          <div className="p-3 bg-white rounded shadow-lg w-72">
+          <div
+            className="p-3 bg-white rounded shadow-lg w-72"
+            style={{ pointerEvents: "none" }} // 👈 REQUIRED
+          >
             {activeCard.title}
           </div>
         ) : null}
