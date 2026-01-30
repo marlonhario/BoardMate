@@ -18,6 +18,8 @@ import {
   Trello,
 } from "lucide-react";
 import Navbar from "@/components/navbar";
+import SortableList from "@/components/sample/SortableList";
+import Board from "@/components/sample/Board";
 
 export default function HomePage() {
   const { isSignedIn, user } = useUser();
@@ -149,6 +151,9 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      {/* <SortableList /> */}
+      <Board />
     </div>
   );
 }
