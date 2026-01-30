@@ -6,6 +6,7 @@ import {
   DragOverEvent,
   DragOverlay,
   PointerSensor,
+  TouchSensor,
   closestCorners,
   useDroppable,
   useSensor,
@@ -53,8 +54,8 @@ function Card({ card }: { card: Card }) {
       style={style}
       {...attributes}
       {...listeners}
-      className={`p-3 flex items-start gap-2 bg-white rounded shadow cursor-grab active:cursor-grabbing touch-manipulation
-        ${isDragging ? "opacity-50" : ""}`}
+      className={`p-4 bg-white rounded shadow cursor-grab active:cursor-grabbing touch-manipulation
+        ${isDragging ? "opacity-30 scale-[0.98]" : ""}`}
     >
       <span {...listeners} className="cursor-grab touch-manipulation">
         <GripVertical size={18} />
@@ -215,9 +216,24 @@ export default function Board() {
   };
 
   const sensors = useSensors(
+    // useSensor(PointerSensor, {
+    //   activationConstraint: {
+    //     distance: 8, // prevents accidental drags
+    //   },
+    // }),
+
+    // Desktop / mouse
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // prevents accidental drags
+        distance: 6,
+      },
+    }),
+
+    // Mobile / touch (LONG PRESS)
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250, // 👈 long press time (ms)
+        tolerance: 5, // 👈 finger can move a bit
       },
     }),
   );
