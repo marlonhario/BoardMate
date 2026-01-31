@@ -1,7 +1,7 @@
 "use client";
 
 import { useBoard } from "@/lib/hooks/useBoards";
-import { ColumnWithTasks } from "@/lib/supabase/models";
+import { ColumnWithTasks, Task } from "@/lib/supabase/models";
 import {
   DndContext,
   DragEndEvent,
@@ -22,40 +22,22 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Plus } from "lucide-react";
+import { GripVertical } from "lucide-react";
 import { useParams } from "next/navigation";
-import { FormEvent, useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/dialog";
-import { Button } from "../ui/button";
-import { Label } from "../ui/label";
-import { Input } from "../ui/input";
-import { Textarea } from "../ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
+import { useEffect, useState } from "react";
 
-type Card = {
-  id: string;
-  title: string;
-};
+// type Task = {
+//   id: string;
+//   title: string;
+// };
 
-type Column = {
-  id: string;
-  title: string;
-  cards: Card[];
-};
+// type Column = {
+//   id: string;
+//   title: string;
+//   tasks: Task[];
+// };
 
-function Card({ card }: { card: Card }) {
+function Card({ card }: { card: Task }) {
   const {
     setNodeRef,
     attributes,
@@ -78,6 +60,7 @@ function Card({ card }: { card: Card }) {
       className={`
         p-4 bg-white rounded shadow
         touch-manipulation
+        h-50
         ${isDragging ? "opacity-30 scale-[0.98]" : ""}
       `}
     >
@@ -95,11 +78,9 @@ function Card({ card }: { card: Card }) {
 function Column({
   column,
   onAddCard,
-  onCreateTask,
 }: {
   column: ColumnWithTasks;
-  onAddCard?: (columnId: string) => void;
-  onCreateTask: (taskData: FormEvent<HTMLFormElement>) => Promise<void>;
+  onAddCard: (columnId: string) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: column.id, // 👈 THIS is the fix
@@ -121,7 +102,6 @@ function Column({
           min-h-[200px]
           rounded
           transition
-          ${isOver ? "bg-blue-100/40" : ""}
         `}
       >
         <SortableContext
@@ -129,112 +109,48 @@ function Column({
           strategy={verticalListSortingStrategy}
         >
           <div className="space-y-2 min-h-[60px] touch-none">
-            {column.tasks.map((task) => (
-              <Card key={task.id} card={task} />
+            {column.tasks.map((tasks) => (
+              <Card key={tasks.created_at} card={tasks} />
             ))}
           </div>
         </SortableContext>
       </div>
 
-      {/* <button
+      <button
         onClick={() => onAddCard(column.id)}
         className="mt-2 text-sm text-gray-600 hover:text-black w-full text-left py-2"
       >
-        + Add Task
-      </button> */}
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button
-            variant="ghost"
-            className="w-full mt-3 text-gray-500 hover:text-gray-700"
-          >
-            <Plus />
-            Add Task
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="w-[95vw] max-w-[425px] mx-auto">
-          <DialogHeader>
-            <DialogTitle>Create New Task</DialogTitle>
-            <p className="text-sm text-gray-600">Add a task to the board</p>
-          </DialogHeader>
-
-          <form className="space-y-4" onSubmit={onCreateTask}>
-            <div className="space-y-2">
-              <Label>Title *</Label>
-              <Input id="title" name="title" placeholder="Enter task title" />
-            </div>
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea
-                id="description"
-                name="description"
-                placeholder="Enter task description"
-                rows={3}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Assignee</Label>
-              <Input
-                id="assignee"
-                name="assignee"
-                placeholder="Who should do this?"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Priority</Label>
-              <Select name="priority" defaultValue="medium">
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {["low", "medium", "high"].map((priority, key) => (
-                    <SelectItem key={key} value={priority}>
-                      {priority.charAt(0).toUpperCase() + priority.slice(1)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Due Date</Label>
-              <Input type="date" id="dueDate" name="dueDate" />
-            </div>
-
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button type="submit">Create Task</Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+        + Add Card
+      </button>
     </div>
   );
 }
 
-const initialData: Column[] = [
-  {
-    id: "todo",
-    title: "Todo",
-    cards: [
-      { id: "c1", title: "Buy milk" },
-      { id: "c2", title: "Clean room" },
-    ],
-  },
-  {
-    id: "doing",
-    title: "Doing",
-    cards: [{ id: "c3", title: "Learn dnd-kit" }],
-  },
-  {
-    id: "done",
-    title: "Done",
-    cards: [{ id: "c4", title: "Setup Next.js" }],
-  },
-];
+// const initialData: ColumnWithTasks[] = [
+//   {
+//     id: "todo",
+//     title: "Todo",
+//     tasks: [
+//       { id: "c1", title: "Buy milk" },
+//       { id: "c2", title: "Clean room" },
+//     ],
+//   },
+//   {
+//     id: "doing",
+//     title: "Doing",
+//     tasks: [{ id: "c3", title: "Learn dnd-kit" }],
+//   },
+//   {
+//     id: "done",
+//     title: "Done",
+//     tasks: [{ id: "c4", title: "Setup Next.js" }],
+//   },
+// ];
 
-export default function BoardCopy() {
+export default function Board() {
   const { id } = useParams<{ id: string }>();
+  // const [columns, setColumns] = useState<Column[]>(initialData);
+  const [activeCard, setActiveCard] = useState<Task | null>(null);
   const {
     board,
     createColumn,
@@ -244,12 +160,11 @@ export default function BoardCopy() {
     setColumns,
     moveTask,
     updateColumn,
+    loading,
   } = useBoard(id);
-  // const [columns, setColumns] = useState<Column[]>(initialData);
-  const [activeCard, setActiveCard] = useState<Card | null>(null);
 
   const findColumn = (cardId: string) =>
-    columns.find((col) => col.tasks.some((task) => task.id === cardId));
+    columns.find((col) => col.tasks.some((card) => card.id === cardId));
   const generateId = () => crypto.randomUUID();
 
   const handleDragOver = (event: DragOverEvent) => {
@@ -288,13 +203,14 @@ export default function BoardCopy() {
     });
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over) return;
 
     const activeId = active.id as string;
     const overId = over.id as string;
 
+    const targetColumn = columns.find((col) => col.id === overId);
     const column = findColumn(activeId);
     if (!column) return;
 
@@ -302,17 +218,24 @@ export default function BoardCopy() {
     const newIndex = column.tasks.findIndex((c) => c.id === overId);
 
     if (oldIndex !== newIndex) {
+      // await moveTask(activeId, targetColumn.id, newIndex);
       setColumns((prev) => {
         const next = structuredClone(prev);
         const col = next.find((c) => c.id === column.id)!;
         col.tasks = arrayMove(col.tasks, oldIndex, newIndex);
+        console.log({next, col});
+        
         return next;
       });
     }
   };
 
-  const addColumn = async () => {
-    await createColumn(`New Column`);
+  // useEffect(() => {
+  //   console.log({ columns });
+  // }, [columns]);
+
+  const addColumn = () => {
+    // TO DO
     // setColumns((prev) => [
     //   ...prev,
     //   {
@@ -323,65 +246,23 @@ export default function BoardCopy() {
     // ]);
   };
 
-  // const addCard = (columnId: string) => {
-  //   setColumns((prev) => {
-  //     const next = structuredClone(prev);
-  //     const column = next.find((c) => c.id === columnId);
-  //     if (!column) return prev;
+  const addCard = (columnId: string) => {
+    setColumns((prev) => {
+      const next = structuredClone(prev);
+      const column = next.find((c) => c.id === columnId);
+      if (!column) return prev;
 
-  //     column.tasks.push({
-  //       id: generateId(),
-  //       title: "New Card",
-  //     });
+      // TO DO
+      // column.cards.push({
+      //   id: generateId(),
+      //   title: "New Card",
+      // });
 
-  //     return next;
-  //   });
-  // };
-
-  async function createTask(taskData: {
-    title: string;
-    description?: string;
-    assignee?: string;
-    dueDate?: string;
-    priority: "low" | "medium" | "high";
-  }) {
-    const targetColumn = columns[0];
-    if (!targetColumn) {
-      throw new Error("No column available to add task");
-    }
-
-    await createRealTask(targetColumn.id, taskData);
-  }
-
-  async function handleCreateTask(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const taskData = {
-      title: formData.get("title") as string,
-      description: (formData.get("description") as string) || undefined,
-      assignee: (formData.get("assignee") as string) || undefined,
-      dueDate: (formData.get("dueDate") as string) || undefined,
-      priority:
-        (formData.get("priority") as "low" | "medium" | "high") || "medium",
-    };
-
-    if (taskData.title.trim()) {
-      await createTask(taskData);
-
-      const trigger = document.querySelector(
-        '[data-state="open"',
-      ) as HTMLElement;
-      if (trigger) trigger.click();
-    }
-  }
+      return next;
+    });
+  };
 
   const sensors = useSensors(
-    // useSensor(PointerSensor, {
-    //   activationConstraint: {
-    //     distance: 8, // prevents accidental drags
-    //   },
-    // }),
-
     // Desktop / mouse
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -402,7 +283,6 @@ export default function BoardCopy() {
     <DndContext
       sensors={sensors}
       collisionDetection={rectIntersection}
-      // collisionDetection={closestCorners}
       onDragStart={({ active }) => {
         const card = columns
           .flatMap((col) => col.tasks)
@@ -419,12 +299,7 @@ export default function BoardCopy() {
     >
       <div className="flex gap-4 p-4 overflow-x-auto overscroll-x-contain snap-x snap-mandatory ">
         {columns.map((column) => (
-          <Column
-            key={column.id}
-            column={column}
-            // onAddCard={addCard}
-            onCreateTask={handleCreateTask}
-          />
+          <Column key={column.created_at} column={column} onAddCard={addCard} />
         ))}
 
         <button
@@ -440,7 +315,7 @@ export default function BoardCopy() {
             shrink-0
           "
         >
-          + Add another list
+          + Add Column
         </button>
       </div>
       <DragOverlay>
