@@ -25,7 +25,7 @@ import { ColumnWithTasks, Task } from "@/lib/supabase/models";
 import { DialogTrigger } from "@radix-ui/react-dialog";
 import { Calendar, MoreHorizontal, Plus, Pointer, User } from "lucide-react";
 import { useParams } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -235,7 +235,7 @@ function SortableTask({ task }: { task: Task }) {
               </div>
               <div
                 className={`w-2 h-2 rounded-full flex-shrink-0 ${getPriorityColor(
-                  task.priority
+                  task.priority,
                 )}`}
               />
             </div>
@@ -293,7 +293,7 @@ function TaskOverlay({ task }: { task: Task }) {
             </div>
             <div
               className={`w-2 h-2 rounded-full flex-shrink-0 ${getPriorityColor(
-                task.priority
+                task.priority,
               )}`}
             />
           </div>
@@ -314,6 +314,7 @@ export default function BoardPage() {
     setColumns,
     moveTask,
     updateColumn,
+    loading,
   } = useBoard(id);
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -327,7 +328,7 @@ export default function BoardPage() {
   const [newColumnTitle, setNewColumnTitle] = useState("");
   const [editingColumnTitle, setEditingColumnTitle] = useState("");
   const [editingColumn, setEditingColumn] = useState<ColumnWithTasks | null>(
-    null
+    null,
   );
 
   const [filters, setFilters] = useState({
@@ -343,12 +344,12 @@ export default function BoardPage() {
       activationConstraint: {
         distance: 8,
       },
-    })
+    }),
   );
 
   function handleFilterChange(
     type: "priority" | "assignee" | "dueDate",
-    value: string | string[] | null
+    value: string | string[] | null,
   ) {
     setFilters((prev) => ({
       ...prev,
@@ -409,7 +410,7 @@ export default function BoardPage() {
       await createTask(taskData);
 
       const trigger = document.querySelector(
-        '[data-state="open"'
+        '[data-state="open"',
       ) as HTMLElement;
       if (trigger) trigger.click();
     }
@@ -434,22 +435,22 @@ export default function BoardPage() {
     const overId = over.id as string;
 
     const sourceColumn = columns.find((col) =>
-      col.tasks.some((task) => task.id === activeId)
+      col.tasks.some((task) => task.id === activeId),
     );
 
     const targetColumn = columns.find((col) =>
-      col.tasks.some((task) => task.id === overId)
+      col.tasks.some((task) => task.id === overId),
     );
 
     if (!sourceColumn || !targetColumn) return;
 
     if (sourceColumn.id === targetColumn.id) {
       const activeIndex = sourceColumn.tasks.findIndex(
-        (task) => task.id === activeId
+        (task) => task.id === activeId,
       );
 
       const overIndex = targetColumn.tasks.findIndex(
-        (task) => task.id === overId
+        (task) => task.id === overId,
       );
 
       if (activeIndex !== overIndex) {
@@ -476,9 +477,11 @@ export default function BoardPage() {
     const overId = over.id as string;
 
     const targetColumn = columns.find((col) => col.id === overId);
+    console.log({targetColumn});
+    
     if (targetColumn) {
       const sourceColumn = columns.find((col) =>
-        col.tasks.some((task) => task.id === taskId)
+        col.tasks.some((task) => task.id === taskId),
       );
 
       if (sourceColumn && sourceColumn.id !== targetColumn.id) {
@@ -487,20 +490,20 @@ export default function BoardPage() {
     } else {
       // Check to see if were dropping on another task
       const sourceColumn = columns.find((col) =>
-        col.tasks.some((task) => task.id === taskId)
+        col.tasks.some((task) => task.id === taskId),
       );
 
       const targetColumn = columns.find((col) =>
-        col.tasks.some((task) => task.id === overId)
+        col.tasks.some((task) => task.id === overId),
       );
 
       if (sourceColumn && targetColumn) {
         const oldIndex = sourceColumn.tasks.findIndex(
-          (task) => task.id === taskId
+          (task) => task.id === taskId,
         );
 
         const newIndex = targetColumn.tasks.findIndex(
-          (task) => task.id === overId
+          (task) => task.id === overId,
         );
 
         if (oldIndex !== newIndex) {
@@ -509,6 +512,10 @@ export default function BoardPage() {
       }
     }
   }
+
+  useEffect(() => {
+    console.log({ columns });
+  }, [columns]);
 
   async function handleCreateColumn(e: React.FormEvent) {
     e.preventDefault();
@@ -565,6 +572,10 @@ export default function BoardPage() {
     }),
   }));
 
+  useEffect(() => {
+    console.log({ thisisfromboardcolumns: columns });
+  }, [columns]);
+
   return (
     <>
       <div className="min-h-screen bg-gray-50">
@@ -579,7 +590,7 @@ export default function BoardPage() {
           filterCount={Object.values(filters).reduce(
             (count, v) =>
               count + (Array.isArray(v) ? v.length : v !== null ? 1 : 0),
-            0
+            0,
           )}
         />
 
@@ -661,7 +672,7 @@ export default function BoardPage() {
                     <Button
                       onClick={() => {
                         const newPriorities = filters.priority.includes(
-                          priority
+                          priority,
                         )
                           ? filters.priority.filter((p) => p !== priority)
                           : [...filters.priority, priority];
@@ -716,6 +727,7 @@ export default function BoardPage() {
             <div className="flex flex-wrap items-center gap-4 sm:gap-6">
               <div className="text-sm text-gray-600">
                 <span className="font-medium">Total Tasks: </span>
+
                 {columns.reduce((sum, col) => sum + col.tasks.length, 0)}
               </div>
             </div>
@@ -794,57 +806,62 @@ export default function BoardPage() {
           </div>
 
           {/* Board Columns */}
-
-          <DndContext
-            sensors={sensors}
-            collisionDetection={rectIntersection}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDragEnd={handleDragEnd}
-          >
-            <div
-              className="flex flex-col lg:flex-row lg:space-x-6 lg:overflow-x-auto 
+          {loading ? (
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-pink-500"></div>
+            </div>
+          ) : (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={rectIntersection}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDragEnd={handleDragEnd}
+            >
+              <div
+                className="flex flex-col lg:flex-row lg:space-x-6 lg:overflow-x-auto 
             lg:pb-6 lg:px-2 lg:-mx-2 lg:[&::-webkit-scrollbar]:h-2 
             lg:[&::-webkit-scrollbar-track]:bg-gray-100 
             lg:[&::-webkit-scrollbar-thumb]:bg-gray-300 lg:[&::-webkit-scrollbar-thumb]:rounded-full 
             space-y-4 lg:space-y-0"
-            >
-              {filteredColumns.map((column, key) => (
-                <DroppableColumn
-                  key={key}
-                  column={column}
-                  onCreateTask={handleCreateTask}
-                  onEditColumn={handleEditColumn}
-                >
-                  <SortableContext
-                    items={column.tasks.map((task) => task.id)}
-                    strategy={verticalListSortingStrategy}
+              >
+                {filteredColumns.map((column, key) => (
+                  <DroppableColumn
+                    key={key}
+                    column={column}
+                    onCreateTask={handleCreateTask}
+                    onEditColumn={handleEditColumn}
                   >
-                    <div className="space-y-3">
-                      {column.tasks.map((task, key) => (
-                        <SortableTask task={task} key={key} />
-                      ))}
-                    </div>
-                  </SortableContext>
-                </DroppableColumn>
-              ))}
+                    <SortableContext
+                      items={column.tasks.map((task) => task.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className="space-y-3">
+                        {column.tasks.map((task, key) => (
+                          <SortableTask task={task} key={key} />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DroppableColumn>
+                ))}
 
-              <div className="w-full lg:flex-shrink-0 lg:w-80">
-                <Button
-                  variant="outline"
-                  className="w-full h-full min-h-[200px] border-dashed border-2 text-gray-500 hover:text-gray-700"
-                  onClick={() => setIsCreatingColumn(true)}
-                >
-                  <Plus />
-                  Add another list
-                </Button>
+                <div className="w-full lg:flex-shrink-0 lg:w-80">
+                  <Button
+                    variant="outline"
+                    className="w-full h-full min-h-[200px] border-dashed border-2 text-gray-500 hover:text-gray-700"
+                    onClick={() => setIsCreatingColumn(true)}
+                  >
+                    <Plus />
+                    Add another list
+                  </Button>
+                </div>
+
+                <DragOverlay>
+                  {activeTask ? <TaskOverlay task={activeTask} /> : null}
+                </DragOverlay>
               </div>
-
-              <DragOverlay>
-                {activeTask ? <TaskOverlay task={activeTask} /> : null}
-              </DragOverlay>
-            </div>
-          </DndContext>
+            </DndContext>
+          )}
         </main>
       </div>
 
@@ -917,8 +934,8 @@ export default function BoardPage() {
           </form>
         </DialogContent>
       </Dialog>
-      {/* <BoardCopy /> */}
-      <Board />
+      <BoardCopy />
+      {/* <Board /> */}
     </>
   );
 }
