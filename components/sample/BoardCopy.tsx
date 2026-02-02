@@ -1,7 +1,5 @@
 "use client";
 
-import { useBoard } from "@/lib/hooks/useBoards";
-import { ColumnWithTasks, Task } from "@/lib/supabase/models";
 import {
   DndContext,
   DragEndEvent,
@@ -23,21 +21,20 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-// type Task = {
-//   id: string;
-//   title: string;
-// };
+type Card = {
+  id: string;
+  title: string;
+};
 
-// type Column = {
-//   id: string;
-//   title: string;
-//   tasks: Task[];
-// };
+type Column = {
+  id: string;
+  title: string;
+  cards: Card[];
+};
 
-function Card({ card }: { card: Task }) {
+function Card({ card }: { card: Card }) {
   const {
     setNodeRef,
     attributes,
@@ -59,8 +56,8 @@ function Card({ card }: { card: Task }) {
       {...attributes}
       className={`
         p-4 bg-white rounded shadow
+        min-h-50
         touch-manipulation
-        h-50
         ${isDragging ? "opacity-30 scale-[0.98]" : ""}
       `}
     >
@@ -79,7 +76,7 @@ function Column({
   column,
   onAddCard,
 }: {
-  column: ColumnWithTasks;
+  column: Column;
   onAddCard: (columnId: string) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({
@@ -102,15 +99,16 @@ function Column({
           min-h-[200px]
           rounded
           transition
+          ${isOver ? "bg-blue-100/40" : ""}
         `}
       >
         <SortableContext
-          items={column.tasks.map((c) => c.id)}
+          items={column.cards.map((c) => c.id)}
           strategy={verticalListSortingStrategy}
         >
           <div className="space-y-2 min-h-[60px] touch-none">
-            {column.tasks.map((tasks) => (
-              <Card key={tasks.created_at} card={tasks} />
+            {column.cards.map((card) => (
+              <Card key={card.id} card={card} />
             ))}
           </div>
         </SortableContext>
@@ -126,45 +124,33 @@ function Column({
   );
 }
 
-// const initialData: ColumnWithTasks[] = [
-//   {
-//     id: "todo",
-//     title: "Todo",
-//     tasks: [
-//       { id: "c1", title: "Buy milk" },
-//       { id: "c2", title: "Clean room" },
-//     ],
-//   },
-//   {
-//     id: "doing",
-//     title: "Doing",
-//     tasks: [{ id: "c3", title: "Learn dnd-kit" }],
-//   },
-//   {
-//     id: "done",
-//     title: "Done",
-//     tasks: [{ id: "c4", title: "Setup Next.js" }],
-//   },
-// ];
+const initialData: Column[] = [
+  {
+    id: "todo",
+    title: "Todo",
+    cards: [
+      { id: "c1", title: "Buy milk" },
+      { id: "c2", title: "Clean room" },
+    ],
+  },
+  {
+    id: "doing",
+    title: "Doing",
+    cards: [{ id: "c3", title: "Learn dnd-kit" }],
+  },
+  {
+    id: "done",
+    title: "Done",
+    cards: [{ id: "c4", title: "Setup Next.js" }],
+  },
+];
 
 export default function Board() {
-  const { id } = useParams<{ id: string }>();
-  // const [columns, setColumns] = useState<Column[]>(initialData);
-  const [activeCard, setActiveCard] = useState<Task | null>(null);
-  const {
-    board,
-    createColumn,
-    updateBoard,
-    columns,
-    createRealTask,
-    setColumns,
-    moveTask,
-    updateColumn,
-    loading,
-  } = useBoard(id);
+  const [columns, setColumns] = useState<Column[]>(initialData);
+  const [activeCard, setActiveCard] = useState<Card | null>(null);
 
   const findColumn = (cardId: string) =>
-    columns.find((col) => col.tasks.some((card) => card.id === cardId));
+    columns.find((col) => col.cards.some((card) => card.id === cardId));
   const generateId = () => crypto.randomUUID();
 
   const handleDragOver = (event: DragOverEvent) => {
@@ -190,60 +176,51 @@ export default function Board() {
       const toCol = next.find((c) => c.id === overColumn.id)!;
 
       // 🛑 CARD ALREADY MOVED → DO NOTHING
-      if (toCol.tasks.some((c) => c.id === activeId)) {
+      if (toCol.cards.some((c) => c.id === activeId)) {
         return prev;
       }
 
-      const cardIndex = fromCol.tasks.findIndex((c) => c.id === activeId);
-      const [movedCard] = fromCol.tasks.splice(cardIndex, 1);
+      const cardIndex = fromCol.cards.findIndex((c) => c.id === activeId);
+      const [movedCard] = fromCol.cards.splice(cardIndex, 1);
 
-      toCol.tasks.push(movedCard);
+      toCol.cards.push(movedCard);
 
       return next;
     });
   };
 
-  const handleDragEnd = async (event: DragEndEvent) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over) return;
 
     const activeId = active.id as string;
     const overId = over.id as string;
 
-    const targetColumn = columns.find((col) => col.id === overId);
     const column = findColumn(activeId);
     if (!column) return;
 
-    const oldIndex = column.tasks.findIndex((c) => c.id === activeId);
-    const newIndex = column.tasks.findIndex((c) => c.id === overId);
+    const oldIndex = column.cards.findIndex((c) => c.id === activeId);
+    const newIndex = column.cards.findIndex((c) => c.id === overId);
 
     if (oldIndex !== newIndex) {
-      // await moveTask(activeId, targetColumn.id, newIndex);
       setColumns((prev) => {
         const next = structuredClone(prev);
         const col = next.find((c) => c.id === column.id)!;
-        col.tasks = arrayMove(col.tasks, oldIndex, newIndex);
-        console.log({next, col});
-        
+        col.cards = arrayMove(col.cards, oldIndex, newIndex);
         return next;
       });
     }
   };
 
-  // useEffect(() => {
-  //   console.log({ columns });
-  // }, [columns]);
-
   const addColumn = () => {
-    // TO DO
-    // setColumns((prev) => [
-    //   ...prev,
-    //   {
-    //     id: generateId(),
-    //     title: `New Column`,
-    //     cards: [],
-    //   },
-    // ]);
+    setColumns((prev) => [
+      ...prev,
+      {
+        id: generateId(),
+        title: `New Column`,
+        cards: [],
+      },
+    ]);
   };
 
   const addCard = (columnId: string) => {
@@ -252,17 +229,22 @@ export default function Board() {
       const column = next.find((c) => c.id === columnId);
       if (!column) return prev;
 
-      // TO DO
-      // column.cards.push({
-      //   id: generateId(),
-      //   title: "New Card",
-      // });
+      column.cards.push({
+        id: generateId(),
+        title: "New Card",
+      });
 
       return next;
     });
   };
 
   const sensors = useSensors(
+    // useSensor(PointerSensor, {
+    //   activationConstraint: {
+    //     distance: 8, // prevents accidental drags
+    //   },
+    // }),
+
     // Desktop / mouse
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -283,9 +265,10 @@ export default function Board() {
     <DndContext
       sensors={sensors}
       collisionDetection={rectIntersection}
+      // collisionDetection={closestCorners}
       onDragStart={({ active }) => {
         const card = columns
-          .flatMap((col) => col.tasks)
+          .flatMap((col) => col.cards)
           .find((c) => c.id === active.id);
 
         if (card) setActiveCard(card);
@@ -299,7 +282,7 @@ export default function Board() {
     >
       <div className="flex gap-4 p-4 overflow-x-auto overscroll-x-contain snap-x snap-mandatory ">
         {columns.map((column) => (
-          <Column key={column.created_at} column={column} onAddCard={addCard} />
+          <Column key={column.id} column={column} onAddCard={addCard} />
         ))}
 
         <button
