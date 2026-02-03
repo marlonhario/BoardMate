@@ -513,10 +513,6 @@ export default function BoardPage() {
     }
   }
 
-  useEffect(() => {
-    console.log({ columns });
-  }, [columns]);
-
   async function handleCreateColumn(e: React.FormEvent) {
     e.preventDefault();
 
@@ -571,10 +567,6 @@ export default function BoardPage() {
       return true;
     }),
   }));
-
-  useEffect(() => {
-    console.log({ thisisfromboardcolumns: columns });
-  }, [columns]);
 
   return (
     <>
@@ -934,8 +926,6 @@ export default function BoardPage() {
           </form>
         </DialogContent>
       </Dialog>
-      <BoardCopy />
-      {/* <Board /> */}
     </>
   );
 }
