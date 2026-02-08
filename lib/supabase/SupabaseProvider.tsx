@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useMemo } from "react";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { useSession } from "@clerk/nextjs";
 
@@ -36,7 +36,6 @@ export default function SupabaseProvider({
     <Context.Provider
       value={{ supabase, isLoaded: sessionLoaded && !!supabase }}
     >
-      {/* {!isLoaded ? <div> Loading...</div> : children} */}
       {children}
     </Context.Provider>
   );
